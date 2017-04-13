@@ -1,4 +1,6 @@
 import tensorflow as tf
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import numpy as np
 
 # These are the basis vectors. They are unit vectors
@@ -24,13 +26,15 @@ dataset = [scale*basis[index] for (scale,index) in zip(scales,indices)]
 
 print("dataset = ",dataset)
 
+#n_visible = mnist_width * mnist_width
 n_hidden = 1
 
-X = tf.placeholder("float", name='X')
+# create node for input data
+X = tf.placeholder("float", [None, 2], name='X')
 
 # create nodes for hidden variables
-W_init_max = 4 * np.sqrt(6. / (dataset))
-W_init = tf.random_uniform(shape=dataset,
+W_init_max = 4 * np.sqrt(6. / (n_hidden))
+W_init = tf.random_uniform(shape=[2, n_hidden],
                            minval=-W_init_max,
                            maxval=W_init_max)
 
@@ -38,33 +42,33 @@ W = tf.Variable(W_init, name='W')
 b = tf.Variable(tf.zeros([n_hidden]), name='b')
 
 W_prime = tf.transpose(W)  # tied weights between encoder and decoder
-b_prime = tf.Variable(tf.zeros(dataset), name='b_prime') # want to pass dataset in to get 0s?
+b_prime = tf.Variable(tf.zeros([0, 2]), name='b_prime')
 
-def model(X, mask, W, b, W_prime, b_prime):
 
-    Z = tf.nn.sigmoid(W + b)  # hidden state
+def model(X, W, b, W_prime, b_prime):
+    Z = tf.nn.sigmoid(tf.matmul(X, W) + b)  # hidden state
     Xp = tf.nn.sigmoid(tf.matmul(Z, W_prime) + b_prime)  # reconstructed input
     return Xp
 
-Xp = model(X, mask, W, b, W_prime, b_prime)
+# build model graph
+Xp = model(X, W, b, W_prime, b_prime)
 
 # create cost function
 cost = tf.reduce_sum(tf.pow(X - Xp, 2))  # minimize squared error
 train_op = tf.train.GradientDescentOptimizer(0.02).minimize(cost)  # construct an optimizer
 
+# load MNIST data
+#trX, trY, teX, teY = mnist.train.images, mnist.train.labels, mnist.test.images, mnist.test.labels
+
+# Launch the graph in a session
 with tf.Session() as sess:
     # you need to initialize all variables
-    tf.initialize_all_variables().run()
+    tf.global_variables_initializer().run()
 
     for i in range(10):
-        for start, end in zip(range(0, len(trX), 128), range(128, len(trX), 128)):
-            input_ = trX[start:end]
-            mask_np = np.random.binomial(1, 1 - corruption_level, input_.shape)
-            sess.run(train_op, feed_dict={X: input_, mask: mask_np})
+        for start, end in zip(range(0, len(dataset), 128), range(128, len(dataset), 128)):
+            input_ = dataset[start:end]
+            sess.run(train_op, feed_dict={X: input_})
 
-        mask_np = np.random.binomial(1, 1 - corruption_level, teX.shape)
-        print(i, sess.run(cost, feed_dict={X: teX, mask: mask_np}))
-    m = sess.run(mask, feed_dict={X: trX[0:1], mask: mask_np})
-    #embed()
-    tildX = m[0] *trX[0]
-    reconX = sess.run(Xp, feed_dict={X: trX[0:1], mask: mask_np})
+
+        print(i, sess.run(cost, feed_dict={X: dataset}))
