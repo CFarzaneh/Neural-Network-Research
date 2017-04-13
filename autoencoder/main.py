@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from IPython import embed
+import sys
 
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("/tmp/data/", one_hot = True)
@@ -56,6 +57,8 @@ with tf.Session() as sess:
     for i in range(10):
         for start, end in zip(range(0, len(trX), 128), range(128, len(trX), 128)):
             input_ = trX[start:end]
+            embed()
+            sys.exit()
             mask_np = np.random.binomial(1, 1 - corruption_level, input_.shape)
             sess.run(train_op, feed_dict={X: input_, mask: mask_np})
 
