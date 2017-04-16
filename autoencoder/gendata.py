@@ -31,11 +31,15 @@ def genData(numPts):
     return (dataset, labels)
 
 n_visible = 2
-n_hidden = 2
-datasetSize = 10000
+n_hidden = 1
+datasetSize = 100000
 
 dataset, labels = genData(datasetSize)
-
+#embed()
+#sys.exit()
+#plt.scatter(dataset[:,0], dataset[:,1], c=labels, s=100)
+#plt.show()
+#sys.exit()
 # create node for input data
 X = tf.placeholder("float", [None, n_visible], name='X')
 
@@ -51,25 +55,46 @@ b = tf.Variable(tf.zeros([n_hidden]), name='b')
 W_prime = tf.transpose(W)  # tied weights between encoder and decoder
 b_prime = tf.Variable(tf.zeros([n_visible]), name='b_prime')
 
-Z = tf.nn.sigmoid(tf.matmul(X, W) + b)  # hidden state
-Xp = tf.nn.sigmoid(tf.matmul(Z, W_prime) + b_prime)  # reconstructed input
-
+#Z = tf.nn.relu(tf.matmul(X, W) + b)  # hidden state
+#Xp = tf.nn.relu(tf.matmul(Z, W_prime) + b_prime)  # reconstructed input
+Z = tf.matmul(X, W) + b # hidden state
+Xp = tf.matmul(Z, W_prime) + b_prime  # reconstructed input
 # create cost function
 cost = tf.reduce_sum(tf.pow(X - Xp, 2))  # minimize squared error
-train_op = tf.train.GradientDescentOptimizer(0.02).minimize(cost)  # construct an optimizer
+train_op = tf.train.AdagradOptimizer(0.02).minimize(cost)  # construct an optimizer
 
 # Launch the graph in a session
 with tf.Session() as sess:
     # you need to initialize all variables
     tf.initialize_all_variables().run()
 
-    for i in range(10):
+    for i in range(80):
         for start, end in zip(range(0, datasetSize, 128), range(128, datasetSize, 128)):
             input_ = dataset[start:end]
-            sess.run(train_op, feed_dict={X: input_})
+            weight, _ = sess.run((W, train_op), feed_dict={X: input_})
         print(i, sess.run(cost, feed_dict={X: input_}))
+        print("--Weights--\n", weight)
 
-    testData, labels = genData(100)
+
+    testData, testLabels = genData(100)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,3,1)
+    ax1.set_title("Input Data")
+    ax1.scatter(dataset[:,0], dataset[:,1], c=labels, s=100)
+    ax1.set_aspect("equal")
+    ax2 = fig.add_subplot(1,3,2)
+    ax2.set_title("Latency Space")
     mappedPts = sess.run(Z, feed_dict={X: testData})
-    plt.scatter(mappedPts[:,0], mappedPts[:,1], c=labels, s=100)
+    #ax2.scatter(mappedPts[:,0], mappedPts[:,1], c=testLabels, s=100)
+    ax2.scatter(mappedPts, [0]*mappedPts.size, c=testLabels, s=100)
+
+    #ax2.set_aspect("equal")
+    ax3 = fig.add_subplot(1,3,3)
+    ax3.set_title("Reconstruction")
+    reconPts = sess.run(Xp, feed_dict={X: testData})
+    ax3.scatter(reconPts[:,0], reconPts[:,1], c=testLabels, s=100)
+    ax3.set_aspect("equal")
     plt.show()
+
+
+
