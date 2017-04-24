@@ -66,7 +66,7 @@ train_op = tf.train.AdagradOptimizer(0.02).minimize(cost)  # construct an optimi
 # Launch the graph in a session
 with tf.Session() as sess:
     # you need to initialize all variables
-    tf.initialize_all_variables().run()
+    tf.global_variables_initializer().run()
 
     for i in range(80):
         for start, end in zip(range(0, datasetSize, 128), range(128, datasetSize, 128)):
@@ -79,16 +79,17 @@ with tf.Session() as sess:
     testData, testLabels = genData(100)
     fig = plt.figure()
     ax1 = fig.add_subplot(1,3,1)
+
     ax1.set_title("Input Data")
     ax1.scatter(dataset[:,0], dataset[:,1], c=labels, s=100)
     ax1.set_aspect("equal")
+
     ax2 = fig.add_subplot(1,3,2)
     ax2.set_title("Latency Space")
     mappedPts = sess.run(Z, feed_dict={X: testData})
     #ax2.scatter(mappedPts[:,0], mappedPts[:,1], c=testLabels, s=100)
     ax2.scatter(mappedPts, [0]*mappedPts.size, c=testLabels, s=100)
 
-    #ax2.set_aspect("equal")
     ax3 = fig.add_subplot(1,3,3)
     ax3.set_title("Reconstruction")
     reconPts = sess.run(Xp, feed_dict={X: testData})
