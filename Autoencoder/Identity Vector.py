@@ -55,23 +55,27 @@ b = tf.Variable(tf.zeros([n_hidden]), name='b')
 W_prime = tf.transpose(W)  # tied weights between encoder and decoder
 b_prime = tf.Variable(tf.zeros([n_visible]), name='b_prime')
 
-#Z = tf.nn.relu(tf.matmul(X, W) + b)  # hidden state
-#Xp = tf.nn.relu(tf.matmul(Z, W_prime) + b_prime)  # reconstructed input
-Z = tf.matmul(X, W) + b # hidden state
-Xp = tf.matmul(Z, W_prime) + b_prime  # reconstructed input
+Z = tf.nn.relu6(tf.add(tf.matmul(X, W), b))  # hidden state
+Xp = tf.nn.relu6(tf.add(tf.matmul(Z, W_prime), b_prime))  # reconstructed input
+#Z = tf.matmul(X, W) + b # hidden state
+#Xp = tf.matmul(Z, W_prime) + b_prime  # reconstructed input
 # create cost function
 cost = tf.reduce_sum(tf.pow(X - Xp, 2))  # minimize squared error
-train_op = tf.train.AdagradOptimizer(0.02).minimize(cost)  # construct an optimizer
+train_op = tf.train.AdamOptimizer(0.02).minimize(cost)  # construct an optimizer
 
 # Launch the graph in a session
 with tf.Session() as sess:
     # you need to initialize all variables
     tf.global_variables_initializer().run()
 
+    data = []
+    num = []
     for i in range(80):
         for start, end in zip(range(0, datasetSize, 128), range(128, datasetSize, 128)):
             input_ = dataset[start:end]
             weight, _ = sess.run((W, train_op), feed_dict={X: input_})
+        data.append(sess.run(cost, feed_dict={X: input_}))
+        num.append(i)
         print(i, sess.run(cost, feed_dict={X: input_}))
         print("--Weights--\n", weight)
 
@@ -95,7 +99,9 @@ with tf.Session() as sess:
     reconPts = sess.run(Xp, feed_dict={X: testData})
     ax3.scatter(reconPts[:,0], reconPts[:,1], c=testLabels, s=100)
     ax3.set_aspect("equal")
+
     plt.show()
 
-
-
+    plt.plot(num,data,'ro')
+    plt.axis([0,80,0,400])
+    plt.show()
