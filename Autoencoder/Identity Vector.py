@@ -44,6 +44,7 @@ dataset, labels = genData(datasetSize)
 X = tf.placeholder("float", [None, n_visible], name='X')
 
 # create nodes for hidden variables
+#Initalize the weights, not using Xaviar.
 W_init_max = 4 * np.sqrt(6. / (n_visible + n_hidden))
 W_init = tf.random_uniform(shape=[n_visible, n_hidden],
                            minval=-W_init_max,
@@ -55,10 +56,11 @@ b = tf.Variable(tf.zeros([n_hidden]), name='b')
 W_prime = tf.transpose(W)  # tied weights between encoder and decoder
 b_prime = tf.Variable(tf.zeros([n_visible]), name='b_prime')
 
-Z = tf.nn.relu6(tf.add(tf.matmul(X, W), b))  # hidden state
-Xp = tf.nn.relu6(tf.add(tf.matmul(Z, W_prime), b_prime))  # reconstructed input
-#Z = tf.matmul(X, W) + b # hidden state
-#Xp = tf.matmul(Z, W_prime) + b_prime  # reconstructed input
+#Z = tf.nn.relu6(tf.add(tf.matmul(X, W), b))  # hidden state
+#Xp = tf.nn.relu6(tf.add(tf.matmul(Z, W_prime), b_prime))  # reconstructed input
+Z = tf.matmul(X, W) + b # hidden state
+
+Xp = tf.matmul(Z, W_prime) + b_prime  # reconstructed input
 # create cost function
 cost = tf.reduce_sum(tf.pow(X - Xp, 2))  # minimize squared error
 train_op = tf.train.AdamOptimizer(0.02).minimize(cost)  # construct an optimizer
@@ -70,8 +72,9 @@ with tf.Session() as sess:
 
     data = []
     num = []
+    batch_size = 128
     for i in range(80):
-        for start, end in zip(range(0, datasetSize, 128), range(128, datasetSize, 128)):
+        for start, end in zip(range(0, datasetSize, batch_size), range(batch_size, datasetSize, batch_size)):
             input_ = dataset[start:end]
             weight, _ = sess.run((W, train_op), feed_dict={X: input_})
         data.append(sess.run(cost, feed_dict={X: input_}))
