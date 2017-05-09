@@ -70,16 +70,16 @@ with tf.Session() as sess:
     # you need to initialize all variables
     tf.global_variables_initializer().run()
 
-    data = []
+    weights = []
     num = []
     batch_size = 128
     for i in range(80):
         for start, end in zip(range(0, datasetSize, batch_size), range(batch_size, datasetSize, batch_size)):
             input_ = dataset[start:end]
             weight, _ = sess.run((W, train_op), feed_dict={X: input_})
-        data.append(sess.run(cost, feed_dict={X: input_}))
+        weights.append(sess.run(cost, feed_dict={X: input_}))
         num.append(i)
-        print(i, sess.run(cost, feed_dict={X: input_}))
+        print(i, weights[i])
         print("--Weights--\n", weight)
 
 
@@ -105,6 +105,7 @@ with tf.Session() as sess:
 
     plt.show()
 
-    plt.plot(num,data,'ro')
+    plt.plot(num,weights,'ro')
+    plt.title("Cost")
     plt.axis([0,80,0,400])
     plt.show()
