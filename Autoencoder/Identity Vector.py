@@ -35,6 +35,7 @@ n_hidden = 1
 datasetSize = 100000
 
 dataset, labels = genData(datasetSize)
+print(dataset)
 #embed()
 #sys.exit()
 #plt.scatter(dataset[:,0], dataset[:,1], c=labels, s=100)
@@ -56,11 +57,14 @@ b = tf.Variable(tf.zeros([n_hidden]), name='b')
 W_prime = tf.transpose(W)  # tied weights between encoder and decoder
 b_prime = tf.Variable(tf.zeros([n_visible]), name='b_prime')
 
-#Z = tf.nn.relu6(tf.add(tf.matmul(X, W), b))  # hidden state
-#Xp = tf.nn.relu6(tf.add(tf.matmul(Z, W_prime), b_prime))  # reconstructed input
-Z = tf.matmul(X, W) + b # hidden state
+#Non-Linear Activation Function:
+#Z = tf.nn.relu(tf.add(tf.matmul(X, W), b))  # hidden state
+#Xp = tf.nn.relu(tf.add(tf.matmul(Z, W_prime), b_prime))  # reconstructed input
 
-Xp = tf.matmul(Z, W_prime) + b_prime  # reconstructed input
+#Linear Activation Function:
+Z = tf.add(tf.matmul(X, W), b) # hidden state
+Xp = tf.add(tf.matmul(Z, W_prime), b_prime)  # reconstructed input
+
 # create cost function
 cost = tf.reduce_sum(tf.pow(X - Xp, 2))  # minimize squared error
 train_op = tf.train.AdamOptimizer(0.02).minimize(cost)  # construct an optimizer
@@ -70,17 +74,26 @@ with tf.Session() as sess:
     # you need to initialize all variables
     tf.global_variables_initializer().run()
 
-    weights = []
+    costs = []
     num = []
+    bias = []
     batch_size = 128
     for i in range(80):
         for start, end in zip(range(0, datasetSize, batch_size), range(batch_size, datasetSize, batch_size)):
             input_ = dataset[start:end]
+            beforeWeight = sess.run(W)
             weight, _ = sess.run((W, train_op), feed_dict={X: input_})
-        weights.append(sess.run(cost, feed_dict={X: input_}))
+            bias.append(sess.run(b))
+            #biaas, _ = sess.run((b, train_op), feed_dict={X: input_})
+
+        costs.append(sess.run(cost, feed_dict={X: input_}))
         num.append(i)
-        print(i, weights[i])
+        print("\n", i, "Cost:", costs[i])
+        print("--Initial Weights-- \n", beforeWeight)
         print("--Weights--\n", weight)
+        print("Bias\n", bias[-1])
+        #sys.exit()
+        #print("Bias After Backprop\n", biaas)
 
 
     testData, testLabels = genData(100)
@@ -105,7 +118,7 @@ with tf.Session() as sess:
 
     plt.show()
 
-    plt.plot(num,weights,'ro')
+    plt.plot(num,costs,'ro')
     plt.title("Cost")
     plt.axis([0,80,0,400])
     plt.show()
