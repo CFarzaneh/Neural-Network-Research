@@ -6,6 +6,8 @@ import numpy as np
 from IPython import embed
 import sys
 
+np.set_printoptions(threshold=np.nan)
+
 def genData(numPts):
 # These are the basis vectors. They are unit vectors
 # so we can easily control the magnitude
@@ -81,20 +83,14 @@ with tf.Session() as sess:
     for i in range(80):
         for start, end in zip(range(0, datasetSize, batch_size), range(batch_size, datasetSize, batch_size)):
             input_ = dataset[start:end]
-            beforeWeight = sess.run(W)
             weight, _ = sess.run((W, train_op), feed_dict={X: input_})
             bias.append(sess.run(b))
-            #biaas, _ = sess.run((b, train_op), feed_dict={X: input_})
 
         costs.append(sess.run(cost, feed_dict={X: input_}))
         num.append(i)
         print("\n", i, "Cost:", costs[i])
-        print("--Initial Weights-- \n", beforeWeight)
         print("--Weights--\n", weight)
-        print("Bias\n", bias[-1])
-        #sys.exit()
-        #print("Bias After Backprop\n", biaas)
-
+        print("Bias\n", bias[i])
 
     testData, testLabels = genData(100)
     fig = plt.figure()
