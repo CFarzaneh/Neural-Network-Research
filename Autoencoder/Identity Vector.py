@@ -6,7 +6,7 @@ import numpy as np
 from IPython import embed
 import sys
 
-np.set_printoptions(threshold=np.nan)
+#np.set_printoptions(threshold=np.nan)
 
 def genData(numPts):
 # These are the basis vectors. They are unit vectors
