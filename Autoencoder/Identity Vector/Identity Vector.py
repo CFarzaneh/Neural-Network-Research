@@ -83,7 +83,9 @@ with tf.Session() as sess:
     for i in range(80):
         for start, end in zip(range(0, datasetSize, batch_size), range(batch_size, datasetSize, batch_size)):
             input_ = dataset[start:end]
+            #xinput, _ = sess.run(X, train_op), feed_dict={x: input_})
             weight, _ = sess.run((W, train_op), feed_dict={X: input_})
+            bbb, _ = sess.run((b_prime, train_op), feed_dict={X: input_})
             bias.append(sess.run(b))
 
         costs.append(sess.run(cost, feed_dict={X: input_}))
@@ -91,6 +93,7 @@ with tf.Session() as sess:
         print("\n", i, "Cost:", costs[i])
         print("--Weights--\n", weight)
         print("Bias\n", bias[i])
+        print("Bprime\n", bbb)
 
     testData, testLabels = genData(100)
     fig = plt.figure()
