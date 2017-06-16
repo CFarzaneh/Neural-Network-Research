@@ -23,6 +23,7 @@ z_log_var = Dense(latent_dim)(h)
 print(z_mean)
 print(z_log_var)
 
+#bernoulli
 def sampling(args):
 	z_mean, z_log_var = args
 	epsilon = K.random_normal(shape=(batch_size, latent_dim), mean=0.)
@@ -43,7 +44,7 @@ print(x_decoded_mean)
 #loss
 def vae_loss(x, x_decoded_mean):
     xent_loss = original_dim * objectives.binary_crossentropy(x, x_decoded_mean)
-    kl_loss = - 0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
+    kl_loss = - 0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1) #The regularizer
     return xent_loss + kl_loss
 
 vae = Model(x, x_decoded_mean)
